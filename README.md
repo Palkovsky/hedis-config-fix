@@ -27,4 +27,4 @@ main = do
     run conn
 ```
 
-That all, you already working with Redis connection
+Thats all, you already working with Redis connection
