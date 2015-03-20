@@ -19,5 +19,8 @@ library
   build-depends:       base >=4.6 && <4.8
                      , aeson
                      , hedis >= 0.6
+                     , scientific
+                     , text
+                     , time
 
   exposed-modules:     Database.Redis.Config
