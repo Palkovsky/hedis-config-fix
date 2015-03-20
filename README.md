@@ -2,7 +2,7 @@
 
 Just copy this
 
-```yml
+```yaml
 host: localhost                 # host name or address
 port: 6379                      # you can specify either port
 # socket: /run/redis.socket     # or unix socket path
