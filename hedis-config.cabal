@@ -21,8 +21,9 @@ category:            Database
 build-type:          Simple
 cabal-version:       >=1.10
 
-extra-source-files: examples/redis.yml
+extra-source-files: CHANGELOG.md
                   , README.md
+                  , examples/redis.yml
 
 homepage: https://bitbucket.org/s9gf4ult/hedis-config
 source-repository head
