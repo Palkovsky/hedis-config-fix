@@ -1,5 +1,5 @@
 name:                hedis-config
-version:             0.0.2
+version:             0.0.3
 synopsis:            Easy trivial configuration for Redis
 description: Datatype to parse redis connection settings from file like
   .
@@ -38,6 +38,7 @@ library
 
   build-depends:       base         >= 4.6   && < 5
                      , aeson
+                     , bytestring
                      , hedis        >= 0.6
                      , scientific
                      , text
