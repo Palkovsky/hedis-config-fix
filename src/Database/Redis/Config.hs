@@ -10,6 +10,7 @@ import Data.Time
 import Database.Redis
 
 import qualified Data.Aeson.Types as A
+import qualified Data.ByteString.Char8 as BS
 import qualified Data.Text.Encoding as T
 
 
@@ -45,6 +46,13 @@ parsePort o =
     <|> (fmap UnixSocket (o .: "socket"))
     <|> (fmap Service (o .: "service"))
 
+parsePassword :: Object -> A.Parser (Maybe BS.ByteString)
+parsePassword o = do
+  mp <- o .:? "password"
+  pure $ case mp of
+    Nothing -> Nothing
+    Just "" -> Nothing
+    Just ps -> Just $ T.encodeUtf8 ps
 
 instance FromJSON RedisConfig where
     parseJSON v = RedisConfig <$> withObject "RedisConfig" go v
@@ -53,7 +61,7 @@ instance FromJSON RedisConfig where
             ConnInfo
             <$> (o .:? "host" .!= connectHost defaultConnectInfo)
             <*> (parsePort o .!= connectPort defaultConnectInfo)
-            <*> (fmap (fmap T.encodeUtf8) (o .:? "password"))
+            <*> parsePassword o
             <*> (o .:? "database" .!= (connectDatabase defaultConnectInfo))
             <*> (o .:? "max-connections" .!= (connectMaxConnections defaultConnectInfo))
             <*> (fmap (fmap (realToFrac :: Scientific -> NominalDiffTime)) (o .:? "max-idle-time") .!= (connectMaxIdleTime defaultConnectInfo))
