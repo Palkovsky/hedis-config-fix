@@ -39,7 +39,7 @@ library
   build-depends:       base         >= 4.6   && < 5
                      , aeson
                      , bytestring
-                     , hedis        >= 0.6
+                     , hedis        >= 0.6   && < 0.9.11
                      , scientific
                      , text
                      , time
