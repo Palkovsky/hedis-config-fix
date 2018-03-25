@@ -42,9 +42,9 @@ newtype RedisConfig =
 parsePort :: Object -> A.Parser (Maybe PortID)
 parsePort o =
     optional
-    $   (fmap (\a -> PortNumber $ floor (a :: Scientific)) (o .: "port"))
-    <|> (fmap UnixSocket (o .: "socket"))
-    <|> (fmap Service (o .: "service"))
+    $   fmap (\a -> PortNumber $ floor (a :: Scientific)) (o .: "port")
+    <|> fmap UnixSocket (o .: "socket")
+    <|> fmap Service (o .: "service")
 
 parsePassword :: Object -> A.Parser (Maybe BS.ByteString)
 parsePassword o = do
@@ -54,18 +54,24 @@ parsePassword o = do
     Just "" -> Nothing
     Just ps -> Just $ T.encodeUtf8 ps
 
+realToFrac' :: Scientific -> NominalDiffTime
+realToFrac' = realToFrac
+
+parseTimeout :: Object -> A.Parser (Maybe (Maybe NominalDiffTime))
+parseTimeout o = o .:? "timeout" >>= \mt -> pure (pure (realToFrac' <$> mt))
+
 instance FromJSON RedisConfig where
     parseJSON v = RedisConfig <$> withObject "RedisConfig" go v
       where
         go o =
             ConnInfo
-            <$> (o .:? "host" .!= connectHost defaultConnectInfo)
-            <*> (parsePort o .!= connectPort defaultConnectInfo)
+            <$> o .:? "host" .!= connectHost defaultConnectInfo
+            <*> parsePort o .!= connectPort defaultConnectInfo
             <*> parsePassword o
-            <*> (o .:? "database" .!= (connectDatabase defaultConnectInfo))
-            <*> (o .:? "max-connections" .!= (connectMaxConnections defaultConnectInfo))
-            <*> (fmap (fmap (realToFrac :: Scientific -> NominalDiffTime)) (o .:? "max-idle-time") .!= (connectMaxIdleTime defaultConnectInfo))
-
+            <*> o .:? "database" .!= connectDatabase defaultConnectInfo
+            <*> o .:? "max-connections" .!= connectMaxConnections defaultConnectInfo
+            <*> fmap (fmap realToFrac') (o .:? "max-idle-time") .!= connectMaxIdleTime defaultConnectInfo
+            <*> parseTimeout o .!= connectTimeout defaultConnectInfo
 
 -- | Open redis connection
 connectRedis :: RedisConfig -> IO Connection
