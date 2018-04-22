@@ -29,6 +29,7 @@ password: "pass"                # if not specified then no password used
 database: 0                     # database number to connect to
 max-connections: 5              # max 5 connections in pool
 max-idle-time: 30               # keep connection open for 30 seconds
+timeout: 30                     # connection timeout
 @
 
 -}
