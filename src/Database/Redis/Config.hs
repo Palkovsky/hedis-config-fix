@@ -1,4 +1,5 @@
-module Database.Redis.Config
+{-# LANGUAGE OverloadedStrings #-}
+module Helpers.HedisConfig
        ( RedisConfig(..)
        , connectRedis
        ) where
@@ -34,9 +35,27 @@ timeout: 30                     # connection timeout
 
 -}
 
-newtype RedisConfig =
-    RedisConfig
-    { getConnectInfo :: ConnectInfo
+newtype RedisConfig = RedisConfig {getConnectInfo :: ConnectInfo}
+
+data SupportedParams = SupportedParams
+    { paramsHost :: HostName
+    , paramsPort :: PortID
+    , paramsPassword :: Maybe BS.ByteString
+    , paramsDatabase :: Integer
+    , paramsMaxConnections :: Int
+    , paramsMaxIdleTime :: NominalDiffTime
+    , paramsTimeout :: Maybe NominalDiffTime
+    }
+
+toConnectInfo :: SupportedParams -> ConnectInfo
+toConnectInfo p = defaultConnectInfo
+    { connectHost = paramsHost p
+    , connectPort = paramsPort p
+    , connectAuth = paramsPassword p
+    , connectDatabase = paramsDatabase p
+    , connectMaxConnections = paramsMaxConnections p
+    , connectMaxIdleTime = paramsMaxIdleTime p
+    , connectTimeout = paramsTimeout p
     }
 
 
@@ -46,6 +65,7 @@ parsePort o =
     $   fmap (\a -> PortNumber $ floor (a :: Scientific)) (o .: "port")
     <|> fmap UnixSocket (o .: "socket")
     <|> fmap Service (o .: "service")
+
 
 parsePassword :: Object -> A.Parser (Maybe BS.ByteString)
 parsePassword o = do
@@ -62,10 +82,10 @@ parseTimeout :: Object -> A.Parser (Maybe (Maybe NominalDiffTime))
 parseTimeout o = o .:? "timeout" >>= \mt -> pure (pure (realToFrac' <$> mt))
 
 instance FromJSON RedisConfig where
-    parseJSON v = RedisConfig <$> withObject "RedisConfig" go v
+    parseJSON (Object obj) = RedisConfig <$> (toConnectInfo <$> (go obj))
       where
         go o =
-            ConnInfo
+            SupportedParams
             <$> o .:? "host" .!= connectHost defaultConnectInfo
             <*> parsePort o .!= connectPort defaultConnectInfo
             <*> parsePassword o
@@ -73,6 +93,7 @@ instance FromJSON RedisConfig where
             <*> o .:? "max-connections" .!= connectMaxConnections defaultConnectInfo
             <*> fmap (fmap realToFrac') (o .:? "max-idle-time") .!= connectMaxIdleTime defaultConnectInfo
             <*> parseTimeout o .!= connectTimeout defaultConnectInfo
+    parseJSON _ = RedisConfig <$> (pure defaultConnectInfo)
 
 -- | Open redis connection
 connectRedis :: RedisConfig -> IO Connection
