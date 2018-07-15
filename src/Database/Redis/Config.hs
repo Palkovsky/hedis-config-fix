@@ -1,5 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
-module Helpers.HedisConfig
+module Database.Redis.Config
        ( RedisConfig(..)
        , connectRedis
        ) where
